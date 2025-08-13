@@ -21,9 +21,11 @@ def main():
     Run a demonstration of homomorphic vector operations using OpenFHE-NumPy:
       • addition
       • subtraction
-      • transpose
       • elementwise multiplication
+      • scalar multiplication
       • inner product via *
+      • sum
+      • rotation
     """
     # Cryptographic setup
     mult_depth = 4
@@ -80,7 +82,7 @@ def main():
     )
 
     # vector_c will be packed, tiled and encrypted:
-    # 1.1, 2.2, 3.3, 4.0, 5.5, 6.6, 7.7, 8.8, 1.1, 2.2, 3.3, 4.0, 5.5, 6.6, 7.7, 8.8
+    # 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8
     ctv_c = onp.array(
         cc=cc,
         data=vector_c,
@@ -97,7 +99,7 @@ def main():
     validate_and_print_results(
         res_add,
         np.add(vector_a, vector_b),
-        f"Vector Addition  \n{vector_a} \n{vector_b}",
+        f"Vector Addition of \n{vector_a} \n{vector_b}",
     )
 
     # 2) Subtraction
@@ -106,27 +108,19 @@ def main():
     validate_and_print_results(
         res_sub,
         np.subtract(vector_a, vector_b),
-        f"Vector Subtraction  \n{vector_a} and \n{vector_b}",
+        f"Vector Subtraction of \n{vector_a} and \n{vector_b}",
     )
 
-    # 3) Transpose
-    onp.gen_transpose_keys(keys.secretKey, ctv_a)
-    ctv_a_T = onp.transpose(ctv_a)
-    res_T = ctv_a_T.decrypt(keys.secretKey, unpack_type="original")
-    validate_and_print_results(
-        res_T, np.transpose(vector_a), f"Tranpose \n{vector_a}"
-    )
-
-    # 4) Elementwise multiplication
+    # 3) Elementwise multiplication
     ctv_mul = ctv_a * ctv_b
     res_mul = ctv_mul.decrypt(keys.secretKey, unpack_type="original")
     validate_and_print_results(
         res_mul,
         np.multiply(vector_a, vector_b),
-        f"Elementwise multiplication \n{vector_a} \n{vector_b} ",
+        f"Elementwise multiplication of \n{vector_a} and \n{vector_b} ",
     )
 
-    # 5) Elementwise multiplication
+    # 4) Scalar multiplication
     ctv_mul_scalar = ctv_a * 7
     res_mul_scalar = ctv_mul_scalar.decrypt(
         keys.secretKey, unpack_type="original"
@@ -134,10 +128,10 @@ def main():
     validate_and_print_results(
         res_mul_scalar,
         np.multiply(vector_a, 7),
-        f"Scalar Multiplcation \n{vector_a} and 7",
+        f"Scalar Multiplication of \n{vector_a} and 7",
     )
 
-    # 6) Inner product
+    # 5) Inner product
     # We can use onp.dot(ctv_a, ctv_b) as well
     ctv_inner = ctv_a @ ctv_b
     res_inner_decrypted = ctv_inner.decrypt(
@@ -146,17 +140,17 @@ def main():
     validate_and_print_results(
         res_inner_decrypted,
         np.dot(vector_a, vector_b),
-        f"Inner product of \n{vector_a} \n{vector_b}",
+        f"Inner product of \n{vector_a} and \n{vector_b}",
     )
 
-    # 7) Sum
+    # 6) Sum
     ctv_sum = onp.sum(ctv_a)
     res_sum_decrypted = ctv_sum.decrypt(keys.secretKey, unpack_type="original")
     validate_and_print_results(
         res_sum_decrypted, np.sum(vector_a), "Sum of vector\n" + str(vector_a)
     )
 
-    # 8) Rotation.
+    # 7) Rotation.
     for shift in range(1, 8):
         ctv_c_rotated = onp.roll(ctv_c, shift)
         res_rotation = ctv_c_rotated.decrypt(
